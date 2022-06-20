@@ -1,19 +1,20 @@
-require('dotenv').config();
+const dotenv = require('dotenv');
 const express = require('express');
 const app = express();
 const jwt = require('jsonwebtoken');
+dotenv.config();
 const posts = [
   {
-    name: 'Omar',
-    post: 'post 1',
+    username: 'Omar',
+    title: 'post 1',
   },
   {
-    name: 'Guadalupe',
-    post: 'post 2',
+    username: 'Guadalupe',
+    title: 'post 2',
   },
   {
-    name: 'Luis',
-    post: 'post 2',
+    username: 'Luis',
+    title: 'post 3',
   },
 ];
 
@@ -27,7 +28,7 @@ app.post('/login', (req, res) => {
   //authentication User
   const username = req.body.username;
   const user = { name: username };
-  const accessToken = jwt.sign(user, process.env.APP_TOKEN_SECRET);
+  const accessToken = jwt.sign(user, process.env.ACCESS_TOKEN_SECRET);
   res.json({ accessToken: accessToken });
 });
 
@@ -37,7 +38,7 @@ function authenticationToken(request, response, next) {
   if (token == null) {
     return res.sendStatus(401);
   }
-  jwt.verify(token, process.env.APP_TOKEN_SECRET, (error, user) => {
+  jwt.verify(token, process.env.ACCESS_TOKEN_SECRET, (error, user) => {
     if (error) {
       return response.sendStatus(403);
     }
