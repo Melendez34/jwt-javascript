@@ -20,31 +20,40 @@ const posts = [
 
 app.use(express.json());
 
-app.get('/posts', authenticationToken, (req, res) => {
-  res.json(posts.filter((post) => post.username === req.user.name));
+//cada que se inicie el JS va a limpiar el array
+//se requiere DB para almacenar los token
+let refreshTokens = [];
+
+app.post('/token', (request, response) => {
+  const refreshToken = request.body.token;
+  if (refreshToken == null) return response.sendStatus(401);
+  if (!refreshTokens.includes(refreshToken)) return response.sendStatus(403);
+  jwt.verify(refreshToken, process.env.REFRESH_TOKEN_SECRET, (error, user) => {
+    if (error) {
+      return response.sendStatus(403);
+    }
+    const accessToken = generateAccessToken({ name: user.name });
+    response.json({ accessToken: accessToken });
+  });
+});
+
+app.delete('/logout', (request, response) => {
+  refreshTokens = refreshTokens.filter((token) => token !== request.body.token);
+  response.sendStatus(204);
 });
 
 app.post('/login', (req, res) => {
   //authentication User
   const username = req.body.username;
   const user = { name: username };
-  const accessToken = jwt.sign(user, process.env.ACCESS_TOKEN_SECRET);
-  res.json({ accessToken: accessToken });
+  const accessToken = generateAccessToken(user);
+  const refreshToken = jwt.sign(user, process.env.REFRESH_TOKEN_SECRET);
+  refreshTokens.push(refreshToken);
+  res.json({ accessToken: accessToken, refreshToken: refreshToken });
 });
 
-function authenticationToken(request, response, next) {
-  const authHeader = request.headers['authorization'];
-  const token = authHeader && authHeader.split(' ')[1];
-  if (token == null) {
-    return res.sendStatus(401);
-  }
-  jwt.verify(token, process.env.ACCESS_TOKEN_SECRET, (error, user) => {
-    if (error) {
-      return response.sendStatus(403);
-    }
-    request.user = user;
-    next();
-  });
+function generateAccessToken(user) {
+  return jwt.sign(user, process.env.ACCESS_TOKEN_SECRET, { expiresIn: '20s' });
 }
 
 app.listen(3030);
