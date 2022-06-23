@@ -8,3 +8,7 @@ Backend Authorization with JSON Web Token
 * Express
 * jsonwebtoken
 * dotenv
+
+> Y ejemplo de validacion con encriptacion de passwords con:
+
+* bcrypt
